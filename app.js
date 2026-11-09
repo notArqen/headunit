@@ -47,7 +47,7 @@ const PAGES = [
     ] },
   { id: 'restore', name: 'Restore', desc: 'Bring back the top end lost to compression, slowing or bad rips.',
     on: (s) => s.supreme > 0 || s.exciter > 0, controls: [
-      { k: 'supreme', label: 'Supreme+', min: 0, max: 1, step: 0.01, fmt: pct, hint: 'Rebuilds the missing highs above 10 kHz from what\'s still in the song.' },
+      { k: 'supreme', label: 'Supreme+', min: 0, max: 2, step: 0.01, fmt: pct, hint: 'Rebuilds the missing highs above 10 kHz from what\'s still in the song.' },
       { k: 'exciter', label: 'Exciter', min: 0, max: 1, step: 0.01, fmt: pct, hint: 'Harmonic sparkle on the presence band. Clarity without plain treble boost.' },
       { k: 'exciterFreq', label: 'Exciter from', min: 1000, max: 10000, step: 100, fmt: (v) => hz(v) + ' Hz' },
       { k: 'exciterDrive', label: 'Exciter drive', min: 1, max: 50, step: 1 },

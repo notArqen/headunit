@@ -46,7 +46,7 @@ const DEFAULT_SETTINGS = {
   loudness: 0,        // 0 off, 1 low, 2 high
   driveEq: false,
   stageEq: 0,         // 0 off, 1 low, 2 mid, 3 high
-  supreme: 0,         // 0..1, rebuilds the missing top end (like Kenwood Supreme+)
+  supreme: 0,         // 0..2, rebuilds the missing top end (like Kenwood Supreme+)
   exciter: 0,         // 0..1
   exciterFreq: 3000,  // Hz
   exciterDrive: 12,   // saturation amount
@@ -75,12 +75,14 @@ const dB = (v) => Math.pow(10, v / 20);
 
 // tanh saturation with an even-harmonic (rectified) part. small-signal gain is 1,
 // so the "amount" knobs mean roughly the same thing no matter the drive.
-function shaperCurve(k, asym) {
+// harmonicsOnly subtracts the input back out, leaving just the new harmonics. without it,
+// the high-passed copy gets mixed back in phase-rotated and partly cancels the original.
+function shaperCurve(k, asym, harmonicsOnly = false) {
   const n = 4096, c = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const x = (i / (n - 1)) * 2 - 1;
     const t = Math.tanh(k * x);
-    c[i] = (t + asym * Math.abs(t)) / k;
+    c[i] = (t + asym * Math.abs(t)) / k - (harmonicsOnly ? x : 0);
   }
   return c;
 }
@@ -122,7 +124,7 @@ function createChain(ctx) {
   tone.connect(sum);
 
   // --- supreme+: saturate 5k+ content, keep only what lands above 10k ---
-  const supSh = shaper(); supSh.curve = shaperCurve(30, 0.8);
+  const supSh = shaper(); supSh.curve = shaperCurve(30, 0.8, true);
   const supOut = gain(0);
   link(tone, biquad('highpass', 5000), biquad('highpass', 5000), supSh,
     biquad('highpass', 10000), biquad('highpass', 10000), supOut, sum);
@@ -226,9 +228,9 @@ function createChain(ctx) {
 
     set(supOut.gain, s.supreme * 2);
 
-    if (exK !== s.exciterDrive) { exK = s.exciterDrive; exSh.curve = shaperCurve(Math.max(1, exK), 0.4); }
+    if (exK !== s.exciterDrive) { exK = s.exciterDrive; exSh.curve = shaperCurve(Math.max(1, exK), 0.4, true); }
     set(exHP1.frequency, s.exciterFreq); set(exHP2.frequency, s.exciterFreq);
-    set(exOut.gain, s.exciter);
+    set(exOut.gain, s.exciter * 3.5); // harmonics-only branch is quiet; 100% ≈ +3–4 dB of sparkle
 
     set(brLP1.frequency, s.bassRestoreFreq); set(brLP2.frequency, s.bassRestoreFreq);
     set(brBP.frequency, s.bassRestoreFreq * 2);
