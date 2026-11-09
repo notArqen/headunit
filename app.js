@@ -41,16 +41,16 @@ const PAGES = [
   { id: 'bass', name: 'Bass', desc: 'Boost the lows, or rebuild them as harmonics small speakers can reproduce.',
     on: (s) => s.bassBoost > 0 || s.bassRestore > 0, controls: [
       { k: 'bassBoost', label: 'Bass boost', min: 0, max: 12, step: 0.5, unit: 'dB' },
-      { k: 'bassFreq', label: 'Boost center (Hz)', type: 'seg', options: [40, 60, 80, 100, 150, 200].map((f) => [f, f]) },
+      { k: 'bassFreq', wake: ['bassBoost', 6], label: 'Boost center (Hz)', type: 'seg', options: [40, 60, 80, 100, 150, 200].map((f) => [f, f]) },
       { k: 'bassRestore', label: 'Bass restore', min: 0, max: 1, step: 0.01, fmt: pct, hint: 'Psychoacoustic bass: adds harmonics so the sub is felt even when it can\'t be played.' },
-      { k: 'bassRestoreFreq', label: 'Restore below (Hz)', type: 'seg', options: [60, 80, 100, 120, 150].map((f) => [f, f]) },
+      { k: 'bassRestoreFreq', wake: ['bassRestore', 0.5], label: 'Restore below (Hz)', type: 'seg', options: [60, 80, 100, 120, 150].map((f) => [f, f]) },
     ] },
   { id: 'restore', name: 'Restore', desc: 'Bring back the top end lost to compression, slowing or bad rips.',
     on: (s) => s.supreme > 0 || s.exciter > 0, controls: [
       { k: 'supreme', label: 'Supreme+', min: 0, max: 2, step: 0.01, fmt: pct, hint: 'Rebuilds the missing highs above 10 kHz from what\'s still in the song.' },
       { k: 'exciter', label: 'Exciter', min: 0, max: 1, step: 0.01, fmt: pct, hint: 'Harmonic sparkle on the presence band. Clarity without plain treble boost.' },
-      { k: 'exciterFreq', label: 'Exciter from', min: 1000, max: 10000, step: 100, fmt: (v) => hz(v) + ' Hz' },
-      { k: 'exciterDrive', label: 'Exciter drive', min: 1, max: 50, step: 1 },
+      { k: 'exciterFreq', wake: ['exciter', 0.5], label: 'Exciter from', min: 1000, max: 10000, step: 100, fmt: (v) => hz(v) + ' Hz' },
+      { k: 'exciterDrive', wake: ['exciter', 0.5], label: 'Exciter drive', min: 1, max: 50, step: 1 },
     ] },
   { id: 'field', name: 'Sound field', desc: 'Width, ambience and where the vocal sits.',
     on: (s) => s.width !== 100 || s.realizer > 0 || s.vocal > 0 || s.stageEq > 0, controls: [
@@ -62,24 +62,24 @@ const PAGES = [
   { id: 'sub', name: 'Subwoofer', desc: 'A virtual sub layered under the mix.',
     on: (s) => s.subOn, controls: [
       { k: 'subOn', label: 'Subwoofer', type: 'check' },
-      { k: 'subLevel', label: 'Sub level', min: -24, max: 12, step: 0.5, unit: 'dB' },
-      { k: 'subFreq', label: 'Crossover (Hz)', type: 'seg', options: [50, 60, 80, 100, 120, 150].map((f) => [f, f]) },
-      { k: 'subPhase', label: 'Phase', type: 'seg', options: [[0, '0°'], [180, '180°']], hint: 'Flip if the bass gets thinner when the sub comes in.' },
+      { k: 'subLevel', wake: ['subOn', true], label: 'Sub level', min: -24, max: 12, step: 0.5, unit: 'dB' },
+      { k: 'subFreq', wake: ['subOn', true], label: 'Crossover (Hz)', type: 'seg', options: [50, 60, 80, 100, 120, 150].map((f) => [f, f]) },
+      { k: 'subPhase', wake: ['subOn', true], label: 'Phase', type: 'seg', options: [[0, '0°'], [180, '180°']], hint: 'Flip if the bass gets thinner when the sub comes in.' },
     ] },
   { id: 'position', name: 'Position', desc: 'Time alignment: delay the near speaker so both sides arrive together.',
     on: (s) => s.position > 0, controls: [
       { k: 'position', label: 'Listening position', type: 'seg', options: opts(['Off', 'Front L', 'Front R', 'Custom']) },
-      { k: 'alignL', label: 'Delay left', min: 0, max: 10, step: 0.1, unit: 'ms', hint: 'Custom position only.' },
-      { k: 'alignR', label: 'Delay right', min: 0, max: 10, step: 0.1, unit: 'ms', hint: 'Custom position only.' },
+      { k: 'alignL', wake: ['position', 3], label: 'Delay left', min: 0, max: 10, step: 0.1, unit: 'ms', hint: 'Moving this switches to Custom.' },
+      { k: 'alignR', wake: ['position', 3], label: 'Delay right', min: 0, max: 10, step: 0.1, unit: 'ms', hint: 'Moving this switches to Custom.' },
     ] },
   { id: 'dyn', name: 'Dynamics', desc: 'Compressor. Evens out loud and quiet parts.',
     on: (s) => s.compOn, controls: [
       { k: 'compOn', label: 'Compressor', type: 'check' },
-      { k: 'compThreshold', label: 'Threshold', min: -50, max: 0, step: 1, unit: 'dB' },
-      { k: 'compRatio', label: 'Ratio', min: 1, max: 20, step: 0.5, fmt: (v) => v + ':1' },
-      { k: 'compAttack', label: 'Attack', min: 0, max: 100, step: 1, unit: 'ms' },
-      { k: 'compRelease', label: 'Release', min: 10, max: 1000, step: 10, unit: 'ms' },
-      { k: 'compMakeup', label: 'Makeup gain', min: 0, max: 18, step: 0.5, unit: 'dB' },
+      { k: 'compThreshold', wake: ['compOn', true], label: 'Threshold', min: -50, max: 0, step: 1, unit: 'dB' },
+      { k: 'compRatio', wake: ['compOn', true], label: 'Ratio', min: 1, max: 20, step: 0.5, fmt: (v) => v + ':1' },
+      { k: 'compAttack', wake: ['compOn', true], label: 'Attack', min: 0, max: 100, step: 1, unit: 'ms' },
+      { k: 'compRelease', wake: ['compOn', true], label: 'Release', min: 10, max: 1000, step: 10, unit: 'ms' },
+      { k: 'compMakeup', wake: ['compOn', true], label: 'Makeup gain', min: 0, max: 18, step: 0.5, unit: 'dB' },
     ] },
   { id: 'tone', name: 'Loudness', desc: 'Loudness contour, drive EQ and the crossover filters.',
     on: (s) => s.loudness > 0 || s.driveEq || s.hpf > 20 || s.lpf < 20000, controls: [
@@ -94,6 +94,14 @@ const refs = {}; // key → { c, el, out, kind }
 
 function getPath(k, obj = S) { const [a, b] = k.split('.'); return b === undefined ? obj[a] : obj[a][+b]; }
 function setPath(k, v) { const [a, b] = k.split('.'); if (b === undefined) S[a] = v; else S[a][+b] = v; }
+
+// touching a knob that only matters when its parent effect is on switches the parent on
+// (sub level with the sub off, compressor knobs with the compressor off, etc.)
+function wake(c) {
+  if (!c.wake) return;
+  const [k, v] = c.wake;
+  if (S[k] !== v && (k === 'position' || !S[k])) { S[k] = v; refreshUI(); }
+}
 
 const fmtVal = (c, v) => (c.fmt ? c.fmt(v) : (+v).toString() + (c.unit ? ' ' + c.unit : ''));
 
@@ -128,7 +136,7 @@ function makeControl(parent, c) {
     input = el('div', 'seg'); input.setAttribute('role', 'radiogroup'); input.setAttribute('aria-label', c.label);
     for (const [v, l] of c.options) {
       const b = el('button', null, l); b.type = 'button'; b.dataset.v = v;
-      b.addEventListener('click', () => { setPath(c.k, Number(v)); refreshUI(); changed(); });
+      b.addEventListener('click', () => { setPath(c.k, Number(v)); wake(c); refreshUI(); changed(); });
       input.appendChild(b);
     }
     root.appendChild(input);
@@ -144,7 +152,7 @@ function makeControl(parent, c) {
     input.setAttribute('aria-label', c.label);
     input.addEventListener('input', () => {
       const v = Number(input.value);
-      setPath(c.k, v); out.textContent = fmtVal(c, v); setFill(input, c, v); changed();
+      setPath(c.k, v); wake(c); out.textContent = fmtVal(c, v); setFill(input, c, v); changed();
     });
     input.addEventListener('dblclick', () => { setPath(c.k, getPath(c.k, DEFAULT_SETTINGS)); refreshUI(); changed(); });
     root.appendChild(input);

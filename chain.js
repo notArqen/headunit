@@ -165,17 +165,22 @@ function createChain(ctx) {
   vocal.connect(merge, 0, 0); vocal.connect(merge, 0, 1);
   width.connect(merge, 0, 0); width.connect(inv); inv.connect(merge, 0, 1);
 
-  // --- sound realizer: cross-fed early reflections ---
+  // --- sound realizer: a small room of early reflections, mostly cross-fed so it
+  // widens and adds depth instead of just comb-filtering the center ---
   const post = gain();
   merge.connect(post);
   const rSplit = ctx.createChannelSplitter(2), rMerge = ctx.createChannelMerger(2);
-  const dL = ctx.createDelay(0.1), dR = ctx.createDelay(0.1);
-  dL.delayTime.value = 0.013; dR.delayTime.value = 0.019;
   merge.connect(rSplit);
-  rSplit.connect(dL, 0); rSplit.connect(dR, 1);
-  dL.connect(rMerge, 0, 1); dR.connect(rMerge, 0, 0);
+  // [from, to, seconds, gain]
+  const TAPS = [[0, 1, 0.0073, 1], [1, 0, 0.0113, 0.9], [0, 0, 0.0171, 0.6], [1, 1, 0.0237, 0.55],
+    [0, 1, 0.0291, 0.5], [1, 0, 0.0337, 0.45], [0, 0, 0.0419, 0.3], [1, 1, 0.0463, 0.3]];
+  for (const [from, to, t, g] of TAPS) {
+    const d = ctx.createDelay(0.1); d.delayTime.value = t;
+    const tg = gain(g);
+    rSplit.connect(d, from); d.connect(tg); tg.connect(rMerge, 0, to);
+  }
   const rOut = gain(0);
-  link(rMerge, biquad('highpass', 300), biquad('lowpass', 7000), rOut, post);
+  link(rMerge, biquad('highpass', 250), biquad('lowpass', 6500), rOut, post);
 
   // --- balance → time alignment → compressor → wet → master ---
   const pan = ctx.createStereoPanner();
@@ -221,8 +226,8 @@ function createChain(ctx) {
     const loud = [[0, 0], [4, 2], [8, 4]][s.loudness] || [0, 0];
     set(loudLow.gain, loud[0]); set(loudHigh.gain, loud[1]);
 
-    set(driveLow.gain, s.driveEq ? 3 : 0);
-    set(driveHigh.gain, s.driveEq ? 2 : 0);
+    set(driveLow.gain, s.driveEq ? 4.5 : 0);
+    set(driveHigh.gain, s.driveEq ? 3 : 0);
 
     set(stage.gain, [0, 1.5, 3, 4.5][s.stageEq] || 0);
 
@@ -234,11 +239,11 @@ function createChain(ctx) {
 
     set(brLP1.frequency, s.bassRestoreFreq); set(brLP2.frequency, s.bassRestoreFreq);
     set(brBP.frequency, s.bassRestoreFreq * 2);
-    set(brOut.gain, s.bassRestore * 1.5);
+    set(brOut.gain, s.bassRestore * 2.5);
 
     set(vocal.gain, [0, 3, 6, 9][s.vocal] || 0);
     set(width.gain, s.width / 100);
-    set(rOut.gain, [0, 0.12, 0.2, 0.3][s.realizer] || 0);
+    set(rOut.gain, [0, 0.22, 0.38, 0.55][s.realizer] || 0);
     set(pan.pan, s.balance);
 
     set(subLP1.frequency, s.subFreq); set(subLP2.frequency, s.subFreq);
