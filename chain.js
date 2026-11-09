@@ -192,8 +192,11 @@ function createChain(ctx) {
   link(out, volume, limiter, output);
 
   // ---------------------------------------------------------------------------
+  // smooth ramps while audio is running; direct sets otherwise (a suspended context never
+  // advances its timeline, so a ramp would sit at the old value until the first play)
   const set = (param, v) => {
-    if (live) { param.cancelScheduledValues(ctx.currentTime); param.setTargetAtTime(v, ctx.currentTime, 0.015); }
+    param.cancelScheduledValues(0);
+    if (live && ctx.state === 'running') param.setTargetAtTime(v, ctx.currentTime, 0.015);
     else param.value = v;
   };
   let exK = null;
@@ -260,5 +263,8 @@ function createChain(ctx) {
     }
   }
 
-  return { input, output, apply };
+  // the filters whose combined response the EQ screen draws
+  const toneNodes = [...hpf, ...lpf, ...eq, bassShelf, loudLow, loudHigh, driveLow, driveHigh, stage];
+  // tap = the processed sound before volume/limiter (what the spectrum shows)
+  return { input, output, apply, toneNodes, tap: out };
 }

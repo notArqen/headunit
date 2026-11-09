@@ -4,78 +4,115 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>headunit</title>
-<!-- skeleton: deliberately unstyled. only enough css to make canvases usable. -->
-<style>canvas { width: 100%; display: block; border: 1px solid #888; } fieldset { margin-bottom: 8px; }</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>headunit</h1>
-<p>drop an audio file anywhere, or pick one:</p>
-<input type="file" id="file" accept="audio/*,.m4a,.mp3,.wav,.flac,.aac,.ogg">
-<p id="info">no file loaded.</p>
+<div class="unit">
 
-<fieldset>
-  <legend>Transport</legend>
-  <button id="play" disabled>Play</button>
-  <button id="pause" disabled>Pause</button>
-  <button id="stop" disabled>Stop</button>
-  <label><input type="checkbox" id="loop"> Loop trim region</label>
-  <span id="time">0:00.00 / 0:00.00</span>
-  <span id="peak">peak: -∞ dBFS</span>
-  <p>waveform: click = seek · drag empty area = select trim region · drag blue edges = trim · drag orange squares = fade lengths</p>
-  <canvas id="wave" width="1200" height="140"></canvas>
-</fieldset>
+  <header class="bar">
+    <div class="brand">head<span>unit</span></div>
+    <div class="source" id="info">No source</div>
+    <label class="btn btn-ghost file-btn">
+      <input type="file" id="file" accept="audio/*,.m4a,.mp3,.wav,.flac,.aac,.ogg" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-5 5m5-5 5 5M5 20h14"/></svg>
+      Load audio
+    </label>
+  </header>
 
-<fieldset>
-  <legend>Trim</legend>
-  <label>Start (s) <input type="number" id="trimStart" step="0.01" min="0" value="0"></label>
-  <button id="setStart" disabled>Start = playhead</button>
-  <label>End (s) <input type="number" id="trimEnd" step="0.01" min="0" value="0"></label>
-  <button id="setEnd" disabled>End = playhead</button>
-  <button id="resetTrim" disabled>Reset trim</button>
-  <span id="trimLen"></span>
-</fieldset>
+  <div class="display-slot" id="displaySlot">
+  <section class="display" id="display">
+    <div class="disp-top">
+      <div class="track" id="track">Drop a song anywhere</div>
+      <div class="clock"><span id="time">0:00.00</span><span class="dur" id="dur">/ 0:00.00</span></div>
+    </div>
+    <div class="wave-wrap" id="waveWrap">
+      <canvas id="wave"></canvas>
+      <div class="wave-empty" id="waveEmpty">Drop audio here or use Load audio</div>
+    </div>
+    <div class="transport">
+      <button class="tbtn tbtn-main" id="play" disabled aria-label="Play">
+        <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>
+        <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zm6 0h4v14h-4z"/></svg>
+      </button>
+      <button class="tbtn" id="stop" disabled aria-label="Stop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z"/></svg></button>
+      <button class="tbtn tbtn-toggle" id="loop" aria-pressed="false" aria-label="Loop trim region">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="stroke" d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3m13-3v2a4 4 0 0 1-4 4H4"/></svg>
+      </button>
+      <button class="tbtn tbtn-toggle tbtn-ab" id="ab" aria-pressed="false" title="Bypass all effects (B)">A/B</button>
+      <div class="meter-wrap">
+        <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+        <span class="peak" id="peak">−∞</span>
+      </div>
+    </div>
+  </section>
+  </div>
 
-<fieldset>
-  <legend>Fades (heard live and in export)</legend>
-  <label>Fade in (s) <input type="number" id="fadeIn" step="0.1" min="0" value="0"></label>
-  <label>Fade out (s) <input type="number" id="fadeOut" step="0.1" min="0" value="0"></label>
-  <label>Shape
-    <select id="fadeShape">
-      <option value="linear">Linear</option>
-      <option value="power">Equal power</option>
-      <option value="scurve">S-curve</option>
-      <option value="exp">Exponential</option>
-    </select>
-  </label>
-  <button id="clearFades">Clear fades</button>
-</fieldset>
+  <div class="main">
+    <nav class="menu" id="menu" aria-label="Audio settings"></nav>
+    <section class="panel" id="panel"></section>
 
-<fieldset>
-  <legend>Spectrum</legend>
-  <canvas id="spec" width="1200" height="160"></canvas>
-</fieldset>
+    <aside class="side">
+      <div class="card master">
+        <div class="knob-wrap">
+          <div class="knob" id="volKnob" role="slider" tabindex="0" aria-label="Volume">
+            <div class="knob-cap"><div class="knob-dot"></div></div>
+          </div>
+          <div class="knob-read"><span id="volRead">0.0</span><small>dB</small></div>
+          <div class="knob-label">Volume</div>
+        </div>
+        <div id="masterControls"></div>
+      </div>
 
-<div id="controls"></div>
+      <div class="card">
+        <h3>Trim &amp; fades</h3>
+        <div class="grid2">
+          <label class="field"><span>Start</span><input type="number" id="trimStart" step="0.01" min="0" value="0"></label>
+          <label class="field"><span>End</span><input type="number" id="trimEnd" step="0.01" min="0" value="0"></label>
+          <label class="field"><span>Fade in</span><input type="number" id="fadeIn" step="0.1" min="0" value="0"></label>
+          <label class="field"><span>Fade out</span><input type="number" id="fadeOut" step="0.1" min="0" value="0"></label>
+        </div>
+        <div class="seg seg-sm" id="fadeShape" role="radiogroup" aria-label="Fade shape">
+          <button data-v="linear">Linear</button><button data-v="power">Power</button><button data-v="scurve">S-curve</button><button data-v="exp">Exp</button>
+        </div>
+        <div class="row-btns">
+          <button class="btn btn-ghost btn-sm" id="setStart" disabled>Start ⇤ here</button>
+          <button class="btn btn-ghost btn-sm" id="setEnd" disabled>End ⇥ here</button>
+          <button class="btn btn-ghost btn-sm" id="resetTrim" disabled>Reset</button>
+          <button class="btn btn-ghost btn-sm" id="clearFades">No fades</button>
+        </div>
+        <div class="note" id="trimLen">Drag the waveform edges to trim, orange squares to fade.</div>
+      </div>
 
-<fieldset>
-  <legend>Presets (whole sound setup)</legend>
-  <input type="text" id="presetName" placeholder="preset name">
-  <button id="presetSave">Save</button>
-  <select id="presetList"></select>
-  <button id="presetLoad">Load</button>
-  <button id="presetDelete">Delete</button>
-  <button id="resetAll">Reset everything to default</button>
-</fieldset>
+      <div class="card">
+        <h3>Presets</h3>
+        <div class="preset-row">
+          <select id="presetList" aria-label="Saved presets"></select>
+          <button class="btn btn-ghost btn-sm" id="presetLoad">Load</button>
+          <button class="btn btn-ghost btn-sm" id="presetDelete" aria-label="Delete preset">✕</button>
+        </div>
+        <div class="preset-row">
+          <input type="text" id="presetName" placeholder="Name this sound">
+          <button class="btn btn-ghost btn-sm" id="presetSave">Save</button>
+        </div>
+        <button class="btn btn-text btn-sm" id="resetAll">Reset all settings</button>
+      </div>
 
-<fieldset>
-  <legend>Export</legend>
-  <select id="exportBits">
-    <option value="16">WAV 16-bit</option>
-    <option value="24">WAV 24-bit</option>
-  </select>
-  <button id="export" disabled>Export trimmed + processed</button>
-  <span id="exportStatus"></span>
-</fieldset>
+      <div class="card">
+        <h3>Export</h3>
+        <div class="seg seg-sm" id="exportBits" role="radiogroup" aria-label="Bit depth">
+          <button data-v="16" aria-pressed="true">WAV 16-bit</button><button data-v="24">WAV 24-bit</button>
+        </div>
+        <button class="btn btn-primary" id="export" disabled>Export</button>
+        <div class="note" id="exportStatus">Renders the trim with fades and every effect.</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="drop-veil" id="dropVeil"><div>Drop to load</div></div>
 
 <script src="chain.js"></script>
 <script src="wav.js"></script>
