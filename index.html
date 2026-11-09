@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>headunit</title>
+<!-- skeleton: deliberately unstyled. only enough css to make canvases usable. -->
+<style>canvas { width: 100%; display: block; border: 1px solid #888; } fieldset { margin-bottom: 8px; }</style>
+</head>
+<body>
+<h1>headunit</h1>
+<p>drop an audio file anywhere, or pick one:</p>
+<input type="file" id="file" accept="audio/*,.m4a,.mp3,.wav,.flac,.aac,.ogg">
+<p id="info">no file loaded.</p>
+
+<fieldset>
+  <legend>Transport</legend>
+  <button id="play" disabled>Play</button>
+  <button id="pause" disabled>Pause</button>
+  <button id="stop" disabled>Stop</button>
+  <label><input type="checkbox" id="loop"> Loop trim region</label>
+  <span id="time">0:00.00 / 0:00.00</span>
+  <span id="peak">peak: -∞ dBFS</span>
+  <p>waveform: click = seek · drag empty area = select trim region · drag blue edges = trim · drag orange squares = fade lengths</p>
+  <canvas id="wave" width="1200" height="140"></canvas>
+</fieldset>
+
+<fieldset>
+  <legend>Trim</legend>
+  <label>Start (s) <input type="number" id="trimStart" step="0.01" min="0" value="0"></label>
+  <button id="setStart" disabled>Start = playhead</button>
+  <label>End (s) <input type="number" id="trimEnd" step="0.01" min="0" value="0"></label>
+  <button id="setEnd" disabled>End = playhead</button>
+  <button id="resetTrim" disabled>Reset trim</button>
+  <span id="trimLen"></span>
+</fieldset>
+
+<fieldset>
+  <legend>Fades (heard live and in export)</legend>
+  <label>Fade in (s) <input type="number" id="fadeIn" step="0.1" min="0" value="0"></label>
+  <label>Fade out (s) <input type="number" id="fadeOut" step="0.1" min="0" value="0"></label>
+  <label>Shape
+    <select id="fadeShape">
+      <option value="linear">Linear</option>
+      <option value="power">Equal power</option>
+      <option value="scurve">S-curve</option>
+      <option value="exp">Exponential</option>
+    </select>
+  </label>
+  <button id="clearFades">Clear fades</button>
+</fieldset>
+
+<fieldset>
+  <legend>Spectrum</legend>
+  <canvas id="spec" width="1200" height="160"></canvas>
+</fieldset>
+
+<div id="controls"></div>
+
+<fieldset>
+  <legend>Presets (whole sound setup)</legend>
+  <input type="text" id="presetName" placeholder="preset name">
+  <button id="presetSave">Save</button>
+  <select id="presetList"></select>
+  <button id="presetLoad">Load</button>
+  <button id="presetDelete">Delete</button>
+  <button id="resetAll">Reset everything to default</button>
+</fieldset>
+
+<fieldset>
+  <legend>Export</legend>
+  <select id="exportBits">
+    <option value="16">WAV 16-bit</option>
+    <option value="24">WAV 24-bit</option>
+  </select>
+  <button id="export" disabled>Export trimmed + processed</button>
+  <span id="exportStatus"></span>
+</fieldset>
+
+<script src="chain.js"></script>
+<script src="wav.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
