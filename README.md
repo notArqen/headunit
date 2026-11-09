@@ -6,7 +6,9 @@ car-stereo-style sound shop for any audio file. load a song, trim it on the wave
 
 ## run
 
-open `index.html` in a browser (no build, no server needed), or `python3 -m http.server 8797` in this folder.
+**live:** https://notarqen.github.io/headunit/
+
+or locally: open `index.html` in a browser (no build, no server needed), or `python3 -m http.server 8797` in this folder.
 
 ## what's in it
 
